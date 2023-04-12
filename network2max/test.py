@@ -1,5 +1,7 @@
 import pyshark
+# import sys
+# print(sys.stdout.encoding)
 
-cap = pyshark.LiveCapture(interface='eth0', disable_protocol=False)
-cap.sniff(timeout=10)
-print(cap)
+cap = pyshark.LiveCapture(interface='wifi')
+cap.set_debug()
+cap.sniff(timeout=1)
