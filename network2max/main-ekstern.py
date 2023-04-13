@@ -1,24 +1,17 @@
-# Send all src and dst IPs from all wifi packets to localhost on port 8888.
-
+# Sends web traffic packet information from all wifi to localhost on port 8888.
 import argparse
 import pyshark
 from pythonosc import udp_client
 
-# IPs are 32-bit numbers sub-dived into 4 bytes.
-# They identify where data originates and where it should be sent twoards.
-# in 192.168.1.1, the first three bytes are network ID numbers. The fourth is the host ID.
-
-# cap = pyshark.LiveCapture(interface="Wi-Fi")
-
-host_ip = "192.168.86.39"
+# Legg til IPer til andre nettsteder (f.eks facebook, skolen din etc.)
+ekstern_ip = "192.168.86.39"
 prev_pkt_len = ""
-# max_pkt_len = ""
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--osc_ip", default="127.0.0.1")
-    parser.add_argument("--local_ip", default=host_ip)
+    parser.add_argument("--ekstern_ip", default=ekstern_ip)
     parser.add_argument("--osc_port", type=int, default=8888)
     args = parser.parse_args()
 
@@ -28,7 +21,7 @@ if __name__ == "__main__":
     print(f"Press Ctrl+C to stop.")
 
     # with geoip2.database.Reader('/path/to/maxmind-database.mmdb') as reader:
-    # bpf_filter="ip and host "+host_ip+""
+    # bpf_filter="ip and host "+ekstern_ip+""
     cap = pyshark.LiveCapture(interface="Wi-Fi")
 
     for pkt in cap:
@@ -42,12 +35,10 @@ if __name__ == "__main__":
                 prev_pkt_len = pkt.length
 
                 try:
-                    print("[Protocol:] "+protocol+" [Source IP:] "+source +
-                        " [Destination IP:] "+dest+" [Size:] "+pkt.length)
+                    # print("[Protocol:] "+protocol+" [Source IP:] "+source +
+                    #     " [Destination IP:] "+dest+" [Size:] "+pkt.length)
 
                     # To OSC
-                    client.send_message("/packet_len", int(pkt.length))
-
                     if pkt.highest_layer == "TLS":
                         client.send_message("/protocol", 0)
                     elif pkt.highest_layer == "TCP":
@@ -59,8 +50,11 @@ if __name__ == "__main__":
                     else:
                         client.send_message("/protocol", 4)
 
-                    if source == args.local_ip:
+                    if dest == args.ekstern_ip:
+                        print("[Protocol:] "+protocol+" [Source IP:] "+source +
+                        " [Destination IP:] "+dest+" [Size:] "+pkt.length)
                         #dsp = reader.city(pkt.ip.src)
+                        client.send_message("/packet_len", int(pkt.length))
                         client.send_message('/src_ip', source)
                         client.send_message("/dst_ip", dest)
 
